@@ -5,3 +5,5 @@ authors = ["nirasan <niranirao@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+crossbeam-channel = "0.3"
+crossbeam-utils = "0.6"
