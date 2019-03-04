@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 crossbeam-channel = "0.3"
 crossbeam-utils = "0.6"
+rand = "0.6.5"
