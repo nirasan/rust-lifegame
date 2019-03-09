@@ -7,8 +7,8 @@ use std::thread;
 use std::time::Duration;
 use std::collections::HashMap;
 
-const WIDTH: usize = 40;
-const HEIGHT: usize = 30;
+const WIDTH: usize = 10;
+const HEIGHT: usize = 10;
 
 const TIMEOUT: u64 = 10;
 
@@ -23,58 +23,22 @@ fn main() {
     for i in 0 .. HEIGHT {
         let mut row = Vec::<Life>::new();
         for j in 0 .. WIDTH {
-
             row.push(Life::new((i*WIDTH+j) as u32, rand::prelude::random(), renderer.sender.clone()));
         }
         table.push(row);
     }
 
     // lives get peer heart beats
+    let positions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)];
     for i in 0 .. HEIGHT {
         for j in 0 .. WIDTH {
-            let has_up = i > 0;
-            let has_down = i < HEIGHT - 1;
-            let has_left = j > 0;
-            let has_right = j < WIDTH - 1;
-            // up
-            if has_up {
-                let s = table[i-1][j].sender.clone();
-                table[i][j].peer_senders.push(s);
-            }
-            // down
-            if has_down {
-                let s = table[i+1][j].sender.clone();
-                table[i][j].peer_senders.push(s);
-            }
-            // left
-            if has_left {
-                let s = table[i][j-1].sender.clone();
-                table[i][j].peer_senders.push(s);
-            }
-            // right
-            if has_right {
-                let s = table[i][j+1].sender.clone();
-                table[i][j].peer_senders.push(s);
-            }
-            // up and left
-            if has_up && has_left {
-                let s = table[i-1][j-1].sender.clone();
-                table[i][j].peer_senders.push(s);
-            }
-            // up and right
-            if has_up && has_right {
-                let s = table[i-1][j+1].sender.clone();
-                table[i][j].peer_senders.push(s);
-            }
-            // down and left
-            if has_down && has_left {
-                let s = table[i+1][j-1].sender.clone();
-                table[i][j].peer_senders.push(s);
-            }
-            // down and right
-            if has_down && has_right {
-                let s = table[i+1][j+1].sender.clone();
-                table[i][j].peer_senders.push(s);
+            for position in &positions {
+                if let Some(y) = usize_offset(i, HEIGHT, position.0) {
+                    if let Some(x) = usize_offset(j, WIDTH, position.1) {
+                        let s = table[y][x].sender.clone();
+                        table[i][j].peer_senders.push(s);
+                    }
+                }
             }
         }
     }
@@ -98,6 +62,15 @@ fn main() {
     std::thread::sleep(Duration::from_millis(100));
 
     renderer.start();
+}
+
+fn usize_offset(curr: usize, max: usize, offset: i32) -> Option<usize> {
+    let pos = curr as i32 + offset;
+    if pos >= 0 && pos < max as i32 {
+        Some(pos as usize)
+    } else {
+        None
+    }
 }
 
 struct Life {
@@ -140,8 +113,8 @@ impl Life {
                     self.peer_table.insert(heartbeat.id, heartbeat.exist);
                 },
                 recv(ticker) -> _=> {
-                    self.update();
                     self.send();
+                    self.update();
                 },
                 recv(timeout) -> _ => {
                     break;
